@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Time Replacer</title>
+  <style>
+    body {
+      background-color: #1a1a1a;
+      color: white;
+    }
+    input, textarea, button {
+      resize: none;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      margin-bottom: 10px;
+      background-color: #2b2b2b;
+      color: white;
+    }
+    textarea {
+      height: 30vh;
+    }
+    button {
+      background-color: #4caf50;
+      cursor: pointer;
+    }
+    .footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      padding: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <form id="formTime">
+    <label for="time">Time:</label>
+    <input type="text" id="time" name="time" placeholder="Enter time">
+  </form>
+
+  <form id="formText">
+    <label for="text">Text:</label>
+    <textarea id="text" name="text" placeholder="Enter text"></textarea>
+  </form>
+
+  <button onclick="execute()">Replace Time</button>
+
+  <form id="formResult">
+    <label for="result">Result:</label>
+    <textarea id="result" name="result" placeholder="Result"></textarea>
+  </form>
+
+  <button id="copyResult">Copy to Clipboard</button>
+
+  <div class="footer">
+    <p><a href="https://github.com/kenh0u/timereplacer">GitHub kenh0u/timereplacer</a></p>
+  </div>
+
+  <script>
+    function replaceTime(text, time) {
+      const regex = /(\d{1,2}:)?\d{1,2}:\d{2}/;
+      const match = regex.exec(text);
+
+      if (match) {
+        const oldTime = match[0];
+        const newTime = subtractTime(oldTime, time);
+        return text.replace(oldTime, newTime);
+      } else {
+        return text;
+      }
+    }
+
+    function subtractTime(time1, time2) {
+      // 時間文字列を秒数に変換
+      const seconds1 = timeToSeconds(time1);
+      const seconds2 = timeToSeconds(time2);
+    
+      // 時間を減算
+      const difference = seconds1 - seconds2;
+    
+      // 秒数を時間文字列に変換
+      const result = secondsToTime(difference);
+    
+      return result;
+    }
+    
+    // 時間文字列を秒数に変換する関数
+    function timeToSeconds(time) {
+      const parts = time.split(':').reverse();
+      let seconds = 0;
+    
+      for (let i = 0; i < parts.length; i++) {
+        const part = parseInt(parts[i]);
+    
+        if (i === 0) {
+          seconds += part;
+        } else if (i === 1) {
+          seconds += part * 60;
+        } else if (i === 2) {
+          seconds += part * 60 * 60;
+        }
+      }
+    
+      return seconds;
+    }
+    
+    // 秒数を時間文字列に変換する関数
+    function secondsToTime(seconds) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds - (hours * 3600)) / 60);
+      const remainingSeconds = seconds - (hours * 3600) - (minutes * 60);
+    
+      let result = '';
+    
+      if (hours < 10) {
+        result += '0';
+      }
+      result += hours + ':';
+    
+      if (minutes < 10) {
+        result += '0';
+      }
+      result += minutes + ':';
+    
+      if (remainingSeconds < 10) {
+        result += '0';
+      }
+      result += remainingSeconds;
+    
+      return result;
+    }
+
+    function execute() {
+      const time = document.getElementById("time").value;
+      const text = document.getElementById("text").value;
+      const result = document.getElementById("result");
+
+      const lines = text.split("\n");
+      const replacedLines = lines.map(line => replaceTime(line, time));
+
+      result.value = replacedLines.join("\n");
+    }
+
+    const copyResult = document.getElementById('copyResult');
+    copyResult.addEventListener('click', () => {
+      const result = document.getElementById('result').value;
+      if (result) {
+        navigator.clipboard.writeText(result);
+        copyResult.textContent = 'Copied to clipboard!';
+      }
+    });
+</script>
+
+</body>
+</html>
