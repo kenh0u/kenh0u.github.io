@@ -246,14 +246,7 @@ document.getElementById("vin-search-btn").addEventListener("click", async () => 
       modelPosition: hit.MODEL_POSITION || hit.OPTION_POSITION || null,
     };
     saveVinContext(ctx);
-    toast(`車両情報を設定: ${ctx.syasyu} — 展開図タブで部品を選択できます`);
-    const ctxCard = `
-      <div class="card">
-        <h6 class="large-text">コンテキスト設定済み — ${esc(ctx.syasyu)} ${esc(ctx.katashiki || "")}</h6>
-        <p class="small-text">展開図タブではこの車両の図グループ・図番号が自動的に絞り込まれます。
-        「選択部品」タブの「品番引く」で車両適合する純正部品番号を一括引きます。</p>
-        <button class="tonal" id="goto-diagram-btn">展開図を開く</button>
-      </div>`;
+    toast(`車両情報を設定: ${ctx.syasyu}`);
     const resultCard = `
       <div class="card">
         <h6 class="large-text">検索結果 (${rows.length}件)</h6>
@@ -277,9 +270,7 @@ document.getElementById("vin-search-btn").addEventListener("click", async () => 
           </tbody>
         </table></div>
       </div>`;
-    el.innerHTML = ctxCard + resultCard;
-    const gotoBtn = document.getElementById("goto-diagram-btn");
-    if (gotoBtn) gotoBtn.addEventListener("click", () => activateTab("diagram"));
+    el.innerHTML = resultCard;
   } catch (e) {
     el.innerHTML = `<div class="card"><p style="color:var(--error,var(--primary))">エラー: ${esc(e.message)}</p></div>`;
   }
