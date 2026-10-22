@@ -1,0 +1,281 @@
+/* SUBARU EPC static — Material Design 3 shell on Beer CSS.
+   Single-column SPA with <details> accordion sections (no panes).
+   Beer CSS supplies MD3 tokens (color roles, buttons, fields, cards, dark scheme). */
+
+:root {
+    --error: #f2b8b5;
+    --text-dim: rgba(255, 255, 255, 0.62);
+}
+
+body { margin: 0; }
+
+/* ---- Top app bar (BeerCSS nav.app-bar) — 画面に固定しない (ページ最上部にのみ存在) ---- */
+/* BeerCSS 本体は body を grid (left/top/header/main/footer/right) に組む。
+   nav を grid-area 指定なしで置くと left 列 (空のサイドレーン) に自動配置され、
+   直下が全て空白になる。強制的に top 帯 (全幅) に置く。 */
+#appbar {
+    grid-area: top;
+    height: 56px;
+    padding: 0 12px;
+}
+#appbar h1 { font-size: 18px; margin: 0; }
+
+/* ---- Main column ---- */
+main.app-main {
+    padding-top: 8px;
+    padding-bottom: 24px;
+}
+.sec { margin: 8px 12px; }
+
+/* ---- Accordion (MD3 style) ---- */
+details.acc {
+    border: 1px solid var(--outline);
+    border-radius: 14px;
+    background: var(--surface, #1d1b20);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+details.acc > summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    user-select: none;
+}
+details.acc > summary::-webkit-details-marker { display: none; }
+details.acc > summary .chev { margin-left: auto; transition: transform .2s; font-size: 22px; }
+details.acc[open] > summary .chev { transform: rotate(180deg); }
+details.acc > summary:hover { background: var(--active); }
+details.acc > summary .acc-sub {
+    font-weight: 400;
+    font-size: 12px;
+    opacity: 0.75;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 46vw;
+}
+details.acc .acc-body { padding: 4px 14px 14px; }
+
+/* nested accordions (cascades) */
+details.acc.sub {
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: var(--surface);
+}
+details.acc.sub > summary { padding: 10px 14px; font-size: 13.5px; }
+
+.dim { color: var(--text-dim); }
+.hidden { display: none !important; }
+
+/* ---- 車種一覧テーブル行 (クリック可能を明示) ---- */
+.model-row { cursor: pointer; }
+.model-row:hover { background: var(--active); }
+.model-row.selected { background: var(--secondary-container); }
+.model-row.selected td { font-weight: 700; }
+
+/* ---- Search rows ---- */
+.search-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: end;
+}
+.search-row .field { flex: 1 1 150px; min-width: 130px; max-width: 340px; }
+.vin-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: end;
+}
+.vin-form .field { flex: 1 1 160px; min-width: 140px; max-width: 320px; }
+.vin-form button,
+.search-row button { height: 48px; }
+.field label { color: var(--outline); font-size: .8rem; }
+.field.tiny { flex: 0 1 110px; min-width: 90px; }
+
+/* ---- Cascade pick lists (車種 / 図グループ / 図番号) ---- */
+.pick-list { max-height: 280px; overflow-y: auto; }
+.pick-list .item {
+    padding: 8px 12px;
+    min-height: 40px;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 13px;
+    user-select: none;
+}
+.pick-list .item:hover { background: var(--active); }
+.pick-list .item.selected { background: var(--secondary-container); font-weight: 700; }
+.pick-list .item .code { font-weight: 700; white-space: nowrap; }
+.pick-list .item .name { font-size: 12px; opacity: 0.75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- Diagram image (inside accordion body, full width) ---- */
+.diagram-head { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 8px; font-size: 12.5px; }
+.diagram-head b { font-weight: 700; }
+.diagram-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+.diagram-toolbar button { font-size: 12px; }
+.diagram-container {
+    position: relative;
+    overflow: auto;
+    max-height: 78vh;
+    touch-action: pan-x pan-y;
+    cursor: grab;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+    background: var(--surface);
+}
+.diagram-container.panning { cursor: grabbing; }
+.diagram-img-wrap { position: relative; display: inline-block; padding: 8px; }
+.diagram-img-wrap img { display: block; max-width: none; user-select: none; -webkit-user-drag: none; }
+.point-marker {
+    position: absolute;
+    width: 24px; height: 24px;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    background: rgba(128,128,128,0.35);
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    z-index: 5; box-sizing: border-box;
+}
+.point-marker:hover { background: rgba(128,128,128,0.6); z-index: 10; }
+.point-marker.kubun-link { border-color: #4ecca3; }
+.point-marker.kubun-label { border-color: #f9b234; }
+#diag-tokki {
+    margin-top: 8px;
+    border: 1px solid #f9b234;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 12px;
+}
+#diag-tokki strong { color: #f9b234; }
+#diag-tokki pre { margin: 6px 0 0; white-space: pre-wrap; font-family: inherit; }
+.input-number-bar {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    margin-top: 8px; padding: 8px 10px;
+    background: var(--surface); border: 1px solid var(--outline); border-radius: 12px;
+}
+.input-number-bar label { font-size: 12px; opacity: .8; white-space: nowrap; }
+.input-number-bar input {
+    background: transparent; border: 1px solid var(--outline); border-radius: 8px;
+    padding: 8px; font-size: 13px; min-height: 44px; color: inherit; box-sizing: border-box;
+}
+
+/* ---- Point info / basket (below image) ---- */
+#diag-point-info { margin-top: 10px; }
+#diag-point-info .card { margin-bottom: 8px; }
+.diag-basket {
+    margin-top: 12px;
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 10px;
+}
+.diag-basket-list { max-height: 200px; overflow-y: auto; min-height: 40px; }
+.diag-basket-list .bitem {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 6px; border-bottom: 1px solid var(--outline); font-size: 12px;
+}
+.diag-basket-list .bitem .code { font-weight: 700; white-space: nowrap; }
+.diag-basket-list .bitem .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
+.diag-basket-list .bitem .qty-box { display: inline-flex; align-items: center; }
+.diag-basket-list .bitem .qty-box input {
+    all: unset; inline-size: 48px; block-size: 30px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--outline) !important; border-radius: 8px !important;
+    font-size: 12px; padding: 0 6px !important; text-align: right;
+    appearance: textfield !important; -moz-appearance: textfield !important;
+    box-sizing: border-box;
+}
+.diag-basket-list .bitem .qty-box input:focus { border-color: var(--primary) !important; }
+
+/* ---- Card polish ---- */
+.card h5 { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 1.25rem !important; }
+.card h6 { font-size: 1.05rem !important; font-weight: 700; margin: 8px 0 4px; }
+.small-text { font-size: 12px !important; }
+
+/* 連続 card が BeerCSS の grid で横並びになるのを防ぐ (年改一覧等) */
+.card + .card { margin-top: 12px; }
+#model-detail, #diag-point-info, #vin-results, #ps-results,
+#exchange-results, #kt-results, #ml-results, #ng-results,
+#ic-interchange, #ic-models, #ic-price { display: block; }
+#model-detail .card, #diag-point-info .card { display: block; width: 100%; }
+
+/* ---- Tables ---- */
+table { width: 100%; }
+tbody tr:hover { background: transparent; }
+td.clickable { cursor: pointer; text-decoration: underline; }
+.num-cell { opacity: .6; text-align: center; min-width: 32px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.badge-subaru { background: #4ecca3; color: #000; }
+.badge-oem { background: #f9b234; color: #000; }
+
+/* ---- Loading ---- */
+.loading {
+    display: inline-block; width: 18px; height: 18px;
+    border: 3px solid var(--outline); border-top-color: var(--primary);
+    border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- Toast ---- */
+.toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--primary); color: var(--on-primary, #000);
+    border-radius: 8px; padding: 12px 20px; z-index: 2000;
+    box-shadow: var(--elevate2); max-width: 86vw; font-size: 13px;
+}
+
+/* ---- 選択部品 ---- */
+.estimate-totals { margin-top: 12px; max-width: 420px; margin-left: auto; }
+.estimate-totals th { font-weight: 600; }
+.est-input {
+    background: transparent; border: 1px solid var(--outline); border-radius: 8px;
+    padding: 6px; font-size: 13px; text-align: right; width: 90px; color: inherit;
+}
+.est-input:focus { outline: none; border-color: var(--primary); }
+tr.resolve-miss td { background: rgba(249,178,52,0.12); }
+.resolve-candidates { margin: 4px 0; font-size: 12px; opacity: .8; }
+
+/* ---- 候補選択ダイアログ: 選択行を明示 (ラジオ風 + 背景色 + ✔) ---- */
+#cd-candidates-body tr { cursor: pointer; }
+#cd-candidates-body tr.selected {
+    background: var(--secondary-container, #4a4458);
+    color: var(--on-secondary-container, #e8def8);
+    font-weight: 700;
+    outline: 2px solid var(--primary, #cfbcff);
+    outline-offset: -2px;
+}
+#cd-candidates-body tr.selected::before {
+    content: "✔ ";
+    color: var(--primary, #cfbcff);
+    font-weight: 900;
+}
+#cd-candidates-body tr:hover:not(.selected) { background: var(--active, rgba(128,128,128,.19)); }
+.table-scroll { overflow-x: auto; }
+.table-scroll table { min-width: 640px; }
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--outline); border-radius: 4px; }
+
+@media (max-width: 600px) {
+    .sec { margin: 8px 8px; }
+    .est-input { width: 68px; }
+    .pick-list { max-height: 220px; }
+}

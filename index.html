@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#141218">
+<title>SUBARU EPC — 部品カタログ</title>
+<link rel="stylesheet" href="vendor/beer.min.css">
+<link rel="stylesheet" href="style.css?v=202610222358">
+</head>
+<body class="dark">
+
+<!-- ===== Top app bar ===== -->
+<nav class="app-bar primary-text" id="appbar">
+  <h1>SUBARU EPC STATIC</h1>
+  <input type="hidden" id="area-cd" value="D">
+  <input type="hidden" id="subaru-flg" value="1">
+  <input type="hidden" id="language" value="JPN">
+</nav>
+
+<main class="app-main">
+
+  <!-- ===== 1. 車両 — VIN検索 + コンテキスト一体 (IE原版: 検索条件ヘッダ相当) ===== -->
+  <section id="sec-vehicle" class="sec open">
+    <details class="acc open" id="acc-vehicle">
+      <summary><i>(directions_car)</i> 車両 <span class="acc-sub" id="veh-sub">未設定</span><i class="chev">expand_more</i></summary>
+      <div class="acc-body">
+        <div class="card">
+          <div class="vin-form">
+            <div class="field label border prefix">
+              <i class="front">pin</i>
+              <input type="text" id="vin-before">
+              <label>車台番号前 例: AP3</label>
+            </div>
+            <div class="field label border prefix">
+              <i class="front">pin</i>
+              <input type="text" id="vin-after">
+              <label>車台番号後 例: 002002</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="vin-after-oem">
+              <label>OEM連番 (省略可)</label>
+            </div>
+            <button class="fill" id="vin-search-btn"><i>(search)</i><span>車両検索</span></button>
+          </div>
+          <div id="vin-results"></div>
+        </div>
+        <!-- 車両コンテキスト (検索後 表示, 編集可のテキストボックス群 — 原版 SEPCW0000 検索条件ヘッダ流儀) -->
+        <div class="card hidden" id="ctx-card">
+          <h6><i>(tune)</i> 車両コンテキスト (展開図・品番引きの絞込に使用)</h6>
+          <div class="vin-form" id="ctx-fields">
+            <div class="field label border"><input type="text" id="ctx-syasyu" readonly><label>車種</label></div>
+            <div class="field label border"><input type="text" id="ctx-vin" readonly><label>車台番号</label></div>
+            <div class="field label border"><input type="text" id="ctx-model" readonly><label>モデル</label></div>
+            <div class="field label border"><input type="text" id="ctx-katashiki" readonly><label>型式・類別</label></div>
+            <div class="field label border"><input type="text" id="ctx-trim" readonly><label>内装色</label></div>
+            <div class="field label border"><input type="text" id="ctx-color" readonly><label>外装色</label></div>
+            <div class="field label border"><input type="text" id="ctx-option" readonly><label>OPｺｰﾄﾞ</label></div>
+            <div class="field label border"><input type="text" id="ctx-dest" readonly><label>仕向地</label></div>
+            <div class="field label border"><input type="text" id="ctx-nenkai" readonly><label>年改</label></div>
+            <div class="field label border"><input type="text" id="ctx-bd" readonly><label>生産年月 (車体)</label></div>
+            <div class="field label border"><input type="text" id="ctx-eg" readonly><label>生産年月 (ｴﾝｼﾞﾝ)</label></div>
+            <div class="field label border"><input type="text" id="ctx-tm" readonly><label>生産年月 (ﾐｯｼｮﾝ)</label></div>
+          </div>
+          <div id="ctx-elements" class="row wrap" style="gap:4px;margin-top:6px;"></div>
+          <button class="border" id="ctx-clear-btn"><i>(close)</i>クリア</button>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== 2. 展開図 — カスケードアコーディオン + 図面 + 部品 (下方) ===== -->
+  <section id="sec-diagram" class="sec">
+    <details class="acc" id="acc-diagram">
+      <summary><i>image_search</i> 展開図 <span class="acc-sub" id="diag-sub"></span><i class="chev">expand_more</i></summary>
+      <div class="acc-body">
+        <!-- カスケード1: 車種 -->
+        <details class="acc sub" id="acc-diag-model" open>
+          <summary>車種 <span class="acc-sub" id="diag-model-sub">未選択</span></summary>
+          <div class="acc-body">
+            <div class="field label border small no-margin">
+              <input type="text" id="diag-model-search">
+              <label>車種絞込…</label>
+            </div>
+            <div id="diag-model-list" class="pick-list"></div>
+          </div>
+        </details>
+        <!-- カスケード2: 図グループ (名称表示) -->
+        <details class="acc sub" id="acc-diag-group">
+          <summary>図グループ <span class="acc-sub" id="diag-group-sub">未選択</span></summary>
+          <div class="acc-body">
+            <div id="fig-group-list" class="pick-list"></div>
+          </div>
+        </details>
+        <!-- カスケード3: 図番号 -->
+        <details class="acc sub" id="acc-diag-fig">
+          <summary>図番号 <span class="acc-sub" id="diag-fig-sub">未選択</span></summary>
+          <div class="acc-body">
+            <div id="fig-list" class="pick-list"></div>
+          </div>
+        </details>
+
+        <!-- 図面本体 -->
+        <div id="diagram-display">
+          <div class="card"><p class="dim">車種 → 図グループ → 図番号 の順に選ぶと、ここに展開図が表示されます。</p></div>
+        </div>
+        <div class="diag-toolbar" id="diag-toolbar" style="display:none">
+          <button class="small-round border small" id="dt-prev-fig"><i>chevron_left</i>FIG</button>
+          <button class="small-round border small" id="dt-next-fig">FIG<i>chevron_right</i></button>
+          <button class="small-round border small" id="dt-prev-d"><i>first_page</i>分解図</button>
+          <button class="small-round border small" id="dt-next-d">分解図<i>last_page</i></button>
+          <button class="small-round fill small" id="dt-buhin"><i>(search)</i>品番引き</button>
+        </div>
+
+        <!-- 部品詳細 (図面の下) -->
+        <div id="diag-point-info">
+          <div class="card"><p class="small-text dim">図面のホットスポット（番号）をタップすると、ここに部品が表示されます。</p></div>
+        </div>
+
+        <!-- 選択部品 (バスケット) -->
+        <div class="diag-basket">
+          <h6 class="small-text"><i>receipt_long</i> 選択部品</h6>
+          <div id="diag-basket-list" class="diag-basket-list"></div>
+          <div class="row no-space middle-align">
+            <button class="fill max" id="diag-basket-resolve"><i>(search)</i>品番引き</button>
+            <button class="small-round border" id="diag-basket-clear" title="全消去"><i>delete</i></button>
+          </div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== 3. 選択部品 — 品番引き結果 ===== -->
+  <section id="sec-basket" class="sec">
+    <details class="acc" id="acc-basket">
+      <summary><i>receipt_long</i> 選択部品 <span class="acc-sub" id="basket-sub"></span><i class="chev">expand_more</i></summary>
+      <div class="acc-body">
+        <div class="card">
+          <div class="row no-padding middle-align wrap">
+            <button class="fill" id="est-resolve-btn"><i>(search)</i><span>品番引く (VIN適合で一括確定)</span></button>
+            <span id="est-resolve-status" class="small-text"></span>
+          </div>
+          <div class="row no-padding wrap small-text">
+            <div class="field label border tiny">
+              <input type="number" id="est-bulk-qty" min="1" value="1">
+              <label>数量一括</label>
+            </div>
+            <button class="border" id="est-bulk-apply">一括適用</button>
+            <span class="max"></span>
+            <button class="border" id="est-clear-btn"><i>(delete_forever)</i>全消去</button>
+          </div>
+          <div id="estimate-table"></div>
+          <div class="estimate-totals" id="estimate-totals"></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== 4. 互換部品 ===== -->
+  <section id="sec-exchange" class="sec">
+    <details class="acc" id="acc-exchange">
+      <summary><i>swap_horiz</i> 互換部品 <span class="acc-sub" id="exchange-sub"></span><i class="chev">expand_more</i></summary>
+      <div class="acc-body">
+        <div class="card">
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="exchange-parts-num">
+              <label>部品番号 例: 000009513</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="exchange-syasyu">
+              <label>車種コード 例: B13 (適用絞込)</label>
+            </div>
+            <button class="fill" id="exchange-search-btn"><i>(search)</i><span>検索</span></button>
+          </div>
+          <div class="small-text row no-space">
+            <label class="radio icon s"><input type="radio" name="exchange-type" value="swap" checked><span>入替え</span></label>
+            <label class="radio icon s"><input type="radio" name="exchange-type" value="add"><span>追加</span></label>
+          </div>
+        </div>
+        <div id="exchange-results"></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== 5. 部品名検索 ===== -->
+  <section id="sec-parts-search" class="sec">
+    <details class="acc" id="acc-parts-search">
+      <summary><i>manage_search</i> 部品名検索 <span class="acc-sub" id="ps-sub"></span><i class="chev">expand_more</i></summary>
+      <div class="acc-body">
+        <div class="card">
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="ps-syasyu">
+              <label>車種コード 例: B13</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="ps-word-1">
+              <label>ワード1 例: ｽﾀｰﾀ (半角ｶﾀｶﾅ可)</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="ps-word-2">
+              <label>ワード2</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="ps-word-3">
+              <label>ワード3</label>
+            </div>
+            <button class="fill" id="ps-search-btn"><i>(search)</i><span>検索</span></button>
+          </div>
+          <p class="small-text dim">国内カタログでは半角カタカナで検索してください（例: ｽﾀｰﾀ = スターター）。複数ワードは AND 検索。</p>
+        </div>
+        <div id="ps-results"></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== 6. 部品コード ===== -->
+  <section id="sec-parts-code" class="sec">
+    <details class="acc" id="acc-parts-code">
+      <summary><i>qr_code_2</i> 部品コード <span class="acc-sub" id="pc-sub"></span><i class="chev">expand_more</i></summary>
+      <div class="acc-body">
+        <div class="card">
+          <h6>部品コード一覧 / 曖昧検索</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="pc-syasyu">
+              <label>車種コード 例: B12</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="pc-prefix">
+              <label>prefix 例: 233 / 233%</label>
+            </div>
+            <button class="fill" id="pc-search-btn"><i>(list)</i><span>一覧取得</span></button>
+          </div>
+          <div id="pc-results"></div>
+        </div>
+        <div class="card">
+          <h6>部品コード→図番号一覧 / 件数</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="pf-syasyu">
+              <label>車種コード 例: B12</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="pf-codes">
+              <label>部品コード 例: 23300,23301</label>
+            </div>
+            <button class="fill" id="pf-search-btn"><i>(image)</i><span>図番号取得</span></button>
+          </div>
+          <div id="pf-results"></div>
+        </div>
+        <div class="card">
+          <h6>カタログ絞込検索 (部品コード + VIN)</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="cat-syasyu">
+              <label>車種コード (空欄でVINコンテキスト)</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="cat-code">
+              <label>部品コード 例: 23300</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="cat-fig-no">
+              <label>FIG_NO (省略可)</label>
+            </div>
+            <button class="fill" id="cat-search-btn"><i>(search)</i><span>検索</span></button>
+          </div>
+          <div id="cat-results"></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== 7. 記号・略号 ===== -->
+  <section id="sec-symbols" class="sec">
+    <details class="acc" id="acc-symbols">
+      <summary><i>asterisk</i> 記号・略号 <span class="acc-sub" id="sym-sub"></span><i class="chev">expand_more</i></summary>
+      <div class="acc-body">
+        <div class="card">
+          <h6>記号・略号 (車種ごとの記号一覧)</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="sym-syasyu">
+              <label>車種コード (空欄でVINコンテキスト)</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="kr-input">
+              <label>記号 例: AT (LIKE / 空欄で全件)</label>
+            </div>
+            <button class="fill" id="kr-search-btn"><i>(search)</i><span>取得</span></button>
+          </div>
+          <div id="kr-results"></div>
+        </div>
+        <div class="card">
+          <h6>絵目次記号</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="em-syasyu">
+              <label>車種コード (空欄でVINコンテキスト)</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="em-group">
+              <label>GROUP 例: 001 (空欄で全件)</label>
+            </div>
+            <button class="fill" id="em-search-btn"><i>(search)</i><span>取得</span></button>
+          </div>
+          <div id="em-results"></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== 8. 車両DB — 互換・適用 / 型式・モデル ===== -->
+  <section id="sec-vehicle-db" class="sec">
+    <details class="acc" id="acc-vehicle-db">
+      <summary><i>compare_arrows</i> 車両DB <span class="acc-sub" id="vdb-sub"></span><i class="chev">expand_more</i></summary>
+      <div class="acc-body">
+        <div class="card">
+          <h6>品番→互換部品・適用車種</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="ic-parts-num">
+              <label>部品番号 例: 000009513</label>
+            </div>
+            <button class="fill" id="ic-search-btn"><i>(search)</i><span>検索</span></button>
+            <button class="border" id="ic-price-btn"><i>(payments)</i><span>価格・名称</span></button>
+          </div>
+          <div id="ic-interchange"></div>
+          <div id="ic-models"></div>
+          <div id="ic-price"></div>
+        </div>
+        <div class="card">
+          <h6>型式 / モデル検索</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="kt-katashiki">
+              <label>型式 (排ガス記号なし) 例: TV1</label>
+            </div>
+            <button class="border" id="kt-search-btn"><i>(search)</i><span>型式検索</span></button>
+          </div>
+          <div id="kt-results"></div>
+          <div class="search-row" style="margin-top:8px">
+            <div class="field label border">
+              <input type="text" id="md-model">
+              <label>モデル (VIN型式7桁) 例: TV1K5HB</label>
+            </div>
+            <button class="border" id="md-search-btn"><i>(search)</i><span>モデル検索</span></button>
+          </div>
+          <div id="md-results"></div>
+          <p class="small-text dim">例の型式・モデルはDB実在値です (TV1 = シーレックス/フォレスター等)。</p>
+        </div>
+        <div class="card">
+          <h6>モデル一覧 / 年改→生産年月</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="ml-syasyu">
+              <label>車種コード (空欄でVINコンテキスト)</label>
+            </div>
+            <button class="border" id="ml-search-btn"><i>(list)</i><span>モデル一覧</span></button>
+            <div class="field label border">
+              <input type="text" id="ng-nenkai">
+              <label>年改コード 例: 01</label>
+            </div>
+            <button class="border" id="ng-search-btn"><i>(search)</i><span>生産年月</span></button>
+          </div>
+          <div id="ml-results"></div>
+          <div id="ng-results"></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===== 9. その他 ===== -->
+  <section id="sec-misc" class="sec">
+    <details class="acc" id="acc-misc">
+      <summary><i>public</i> その他 <span class="acc-sub" id="misc-sub"></span><i class="chev">expand_more</i></summary>
+      <div class="acc-body">
+        <div class="card">
+          <h6>収録車種一覧</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="model-search">
+              <label>車種絞込…</label>
+            </div>
+          </div>
+          <div id="model-list" class="pick-list"></div>
+          <div id="model-detail"></div>
+        </div>
+        <div class="card">
+          <h6>イラスト一覧 (図一覧)</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="il-syasyu">
+              <label>車種コード (空欄でVINコンテキスト)</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="il-fig-no">
+              <label>FIG_NO (省略可)</label>
+            </div>
+            <button class="fill" id="il-search-btn"><i>(image)</i><span>取得</span></button>
+          </div>
+          <div id="il-results"></div>
+        </div>
+        <div class="card">
+          <h6>採用・廃止年月 (VIN由来)</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="sy-vin-before">
+              <label>VIN_BEFORE 例: AP3</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="sy-saiyou">
+              <label>SAIYO_YM 例: 198901</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="sy-haishi">
+              <label>HAISHI_YM 例: 199312</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="sy-fig-no">
+              <label>FIG_NO (省略可)</label>
+            </div>
+            <button class="fill" id="sy-search-btn"><i>(calculate)</i><span>計算</span></button>
+          </div>
+          <div id="sy-results"></div>
+        </div>
+        <div class="card">
+          <h6>図グループ情報 / 対象図</h6>
+          <div class="search-row">
+            <div class="field label border">
+              <input type="text" id="fgi-syasyu">
+              <label>車種コード (空欄でVINコンテキスト)</label>
+            </div>
+            <div class="field label border">
+              <input type="text" id="fgi-groups">
+              <label>FIG_GROUP(S) 例: 0A,0B</label>
+            </div>
+            <button class="fill" id="fgi-search-btn"><i>(search)</i><span>取得</span></button>
+          </div>
+          <div id="fgi-results"></div>
+        </div>
+        <div class="card">
+          <h6>バージョン情報</h6>
+          <button class="border" id="vi-search-btn"><i>(info)</i><span>取得</span></button>
+          <div id="vi-results"></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+</main>
+
+<!-- ===== SEPCW0300 部品番号選択ダイアログ (要確認時の候補選択) ===== -->
+<dialog class="dialog" id="candidate-dialog" style="max-width:1100px;width:94vw;">
+  <h6 class="large-text" id="cd-title">候補の確認・選択</h6>
+  <div class="table-scroll" style="max-height:60vh;">
+    <table>
+      <thead>
+        <tr>
+          <th>No</th><th>部品番号 / 互換</th><th>年改</th><th>採用 - 廃止</th>
+          <th>諸元・適用</th><th>適用車種 (型式)</th><th>FIG</th><th>個数</th><th>単価</th>
+        </tr>
+      </thead>
+      <tbody id="cd-candidates-body"></tbody>
+    </table>
+  </div>
+  <p class="small-text" id="cd-sel-status" style="margin:8px 0 0;font-weight:700;color:var(--primary);">
+    未選択
+  </p>
+  <p class="small-text dim" style="margin:4px 0 0;">
+    複数候補は 生産年月日・エンジン型式・仕向け・適用条件 の違いです。行をクリック → OK で確定します。
+  </p>
+  <nav class="right-align no-space">
+    <button class="border" id="cd-cancel-btn">キャンセル</button>
+    <button class="fill" id="cd-pick-btn">OK — この部品番号で確定</button>
+  </nav>
+</dialog>
+
+<script type="module" src="vendor/beer.min.js"></script>
+<script type="module" src="vendor/beer.custom-element.min.js"></script>
+<!-- plain scripts share global scope; load order = dependency order -->
+<script>window.STATIC_BASE = "";</script>
+<script src="js/static.js?v=202610222358"></script>
+<script src="js/core.js?v=202610222358"></script>
+<script src="js/tabs.js?v=202610222358"></script>
+<script src="js/diag2.js?v=202610222358"></script>
+<script src="js/tabs4.js?v=202610222358"></script>
+<script src="js/est.js?v=202610222358"></script>
+</body>
+</html>
