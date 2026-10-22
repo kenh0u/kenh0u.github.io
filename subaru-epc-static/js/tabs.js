@@ -64,12 +64,13 @@ async function renderCtxElements(ctx) {
       (p) => String(p.position) === String(ctx.modelPosition));
     if (!pos) { el.innerHTML = ""; return; }
     const kubunNames = spec.kubunNames || {};
-    const chips = (pos.kigou || [])
+    // 他の ctx-* と同じタイトル付きテキストボックス (Beer CSS field label border)
+    const fields = (pos.kigou || [])
       .map((k, i) => k ? { name: kubunNames[String(i + 1)] || `区分${i + 1}`, kigou: k } : null)
       .filter(Boolean)
-      .map((x) => `<span class="chip border small-text">${esc(x.name)}=${esc(x.kigou)}</span>`)
+      .map((x) => `<div class="field label border"><input type="text" readonly value="${esc(x.kigou)}"><label>${esc(x.name)}</label></div>`)
       .join("");
-    el.innerHTML = chips;
+    el.innerHTML = fields;
   } catch (e) { el.innerHTML = ""; }
 }
 
