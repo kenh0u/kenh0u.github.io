@@ -100,15 +100,8 @@ function candidatesHTML(it) {
       : "";
   }
   const idx = EST.items.indexOf(it);
-  return `<details class="resolve-candidates"><summary style="cursor:pointer;">候補${it.candidates.length}件 [選択]</summary>${candidateRowsText(it.candidates)}<button class="border small" onclick="openCandidateDialog(${idx});return false;" style="margin-top:4px;">候補を選択…</button></details>`;
-}
-
-// SEPCW0300 表示列の1行要約 (ダイアログ summary 用)
-function candidateRowsText(cands) {
-  return cands.map((c) => {
-    if (typeof c === "string") return esc(c);
-    return esc(c.PARTS_NUMBER || c.parts_number || "");
-  }).join("<br>");
+  // 候補品番の展開リストは廃止 — ボタン → SEPCW0300 相当ダイアログで選ぶ
+  return ` <button class="border small" onclick="openCandidateDialog(${idx});return false;">候補${it.candidates.length}件 選択</button>`;
 }
 
 // ---------------------------------------------------------------------------

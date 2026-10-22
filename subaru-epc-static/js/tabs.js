@@ -246,7 +246,7 @@ document.getElementById("vin-search-btn").addEventListener("click", async () => 
       modelPosition: hit.MODEL_POSITION || hit.OPTION_POSITION || null,
     };
     saveVinContext(ctx);
-    toast(`車両コンテキストを設定: ${ctx.syasyu} — 展開図タブで部品を選択できます`);
+    toast(`車両情報を設定: ${ctx.syasyu} — 展開図タブで部品を選択できます`);
     const ctxCard = `
       <div class="card">
         <h6 class="large-text">コンテキスト設定済み — ${esc(ctx.syasyu)} ${esc(ctx.katashiki || "")}</h6>

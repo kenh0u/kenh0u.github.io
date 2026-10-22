@@ -562,9 +562,9 @@ document.getElementById("vi-search-btn").addEventListener("click", async () => {
 
 // --- VIN context bar clear ---
 document.getElementById("ctx-clear-btn").addEventListener("click", () => {
-  if (!getVinContext()) { toast("車両コンテキストは未設定です"); return; }
+  if (!getVinContext()) { toast("車両情報は未設定です"); return; }
   clearVinContext();
-  toast("車両コンテキストをクリアしました");
+  toast("車両情報をクリアしました");
   const el = document.getElementById("ctx-elements");
   if (el) el.innerHTML = "";
 });
